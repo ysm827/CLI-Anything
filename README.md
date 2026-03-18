@@ -41,7 +41,6 @@ CLI-Anything: Bridging the Gap Between AI Agents and the World's Software</stron
 
 > Thanks to all invaluable efforts from the community! More updates continuously on the way everyday..
 
-- **2026-03-18** 🧠 Added an **experimental NotebookLM harness scaffold** from the community. It wraps the installed `notebooklm` CLI for notebook discovery, source management, chat, artifact workflows, downloads, and sharing while preserving a clear experimental/community-maintained boundary.
 - **2026-03-17** 🌐 Launched the **[CLI-Hub](https://hkuds.github.io/CLI-Anything/hub/)** — a central registry where you can browse, search, and install any CLI with a single `pip` command. Contributors can add new CLIs or update existing ones by simply opening a PR with a `registry.json` entry. The hub updates automatically on merge.
 
 - **2026-03-16** 🤖 Added **SKILL.md generation** (Phase 6.5) — every generated CLI now ships with an AI-discoverable skill definition inside the Python package. ReplSkin auto-detects the skill file after `pip install`, and the REPL banner displays the absolute path for agents. Includes `skill_generator.py`, Jinja2 template, `package_data` in all setup.py files, and 51 new tests.
@@ -616,29 +615,6 @@ Each application received complete, production-ready CLI interfaces — not demo
 </table>
 
 > **100% pass rate** across all 1,588 tests — 1,138 unit tests + 450 end-to-end tests.
-
-### 🧪 Experimental / Community Harnesses
-
-These contributions extend CLI-Anything into adjacent agent-native surfaces while keeping their support boundary explicit.
-
-<table>
-<tr>
-<th align="center">Software</th>
-<th align="center">Domain</th>
-<th align="center">CLI Command</th>
-<th align="center">Backend</th>
-<th align="center">Tests</th>
-</tr>
-<tr>
-<td align="center"><strong>🧠 NotebookLM</strong></td>
-<td>AI Research & Knowledge Workspace</td>
-<td><code>cli-anything-notebooklm</code></td>
-<td>Installed <code>notebooklm</code> CLI (<code>notebooklm-py</code>)</td>
-<td align="center">✅ 21</td>
-</tr>
-</table>
-
-> Experimental/community-maintained scaffold: wraps the installed NotebookLM CLI for auth checks, notebook selection, source ingestion, Q&A, artifact generation, downloads, and sharing. Unofficial and not affiliated with Google.
 
 ---
 
