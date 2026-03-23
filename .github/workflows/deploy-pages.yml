@@ -41,10 +41,8 @@ jobs:
       - name: Generate meta-skill
         run: python3 .github/scripts/generate_meta_skill.py
 
-      - name: Copy catalog as static asset (bypass Jekyll)
-        run: |
-          mkdir -p docs/hub/static
-          cp cli-hub-skill/SKILL.md docs/hub/static/catalog.md
+      - name: Copy catalog as .txt to avoid Jekyll processing
+        run: cp cli-hub-skill/SKILL.md docs/hub/SKILL.txt
 
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
@@ -52,17 +50,10 @@ jobs:
           source: ./docs/hub
           destination: ./docs/_site
 
-      - name: Rename catalog.md to SKILL.md in built site
-        run: |
-          mkdir -p ./docs/_site_final
-          cp -r ./docs/_site/* ./docs/_site_final/ 2>/dev/null || true
-          mv ./docs/_site_final/static/catalog.md ./docs/_site_final/SKILL.md
-          rm -rf ./docs/_site_final/static
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './docs/_site_final'
+          path: './docs/_site'
 
   deploy:
     environment:

@@ -11,12 +11,14 @@ CLI-Hub is a marketplace of agent-native command-line interfaces that make profe
 
 ## Live Catalog
 
-**URL**: [`https://hkuds.github.io/CLI-Anything/SKILL.md`](https://hkuds.github.io/CLI-Anything/SKILL.md)
+**URL**: [`https://hkuds.github.io/CLI-Anything/SKILL.txt`](https://hkuds.github.io/CLI-Anything/SKILL.txt)
 
 The catalog is auto-updated and provides:
 - Full list of available CLIs organized by category
 - One-line `pip install` commands for each tool
 - Complete descriptions and usage patterns
+
+**Note**: The file is served as `.txt` but contains markdown formatting for easy parsing.
 
 ## What Can You Do?
 
@@ -33,7 +35,7 @@ Each CLI provides stateful operations, JSON output for agents, REPL mode, and in
 
 ## How to Use
 
-1. **Read the catalog**: Fetch `https://hkuds.github.io/CLI-Anything/SKILL.md`
+1. **Read the catalog**: Fetch `https://hkuds.github.io/CLI-Anything/SKILL.txt` (markdown format)
 2. **Find your tool**: Browse by category to discover the CLI you need
 3. **Install**: Use the provided `pip install` command
 4. **Execute**: All CLIs support `--json` flag for machine-readable output
@@ -51,6 +53,6 @@ cli-anything-<software> --json <command> [options]
 
 ## More Info
 
-- Live Catalog: https://hkuds.github.io/CLI-Anything/SKILL.md
+- Live Catalog: https://hkuds.github.io/CLI-Anything/SKILL.txt
 - Web Hub: https://hkuds.github.io/CLI-Anything/
 - Repository: https://github.com/HKUDS/CLI-Anything
