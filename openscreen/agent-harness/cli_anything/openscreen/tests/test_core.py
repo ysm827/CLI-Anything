@@ -120,6 +120,41 @@ class TestSession:
         assert status["project_open"] is True
         assert status["zoom_region_count"] == 0
 
+    # ── Extra tests from auto version ──────────────────────────────────
+
+    def test_editor_raises_when_not_open(self):
+        s = Session()
+        with pytest.raises(RuntimeError):
+            _ = s.editor
+
+    def test_checkpoint_adds_to_undo(self):
+        s = Session()
+        s.new_project()
+        before = len(s._undo_stack)
+        s.checkpoint()
+        assert len(s._undo_stack) == before + 1
+
+    def test_undo_stack_limit_50(self):
+        s = Session()
+        s.new_project()
+        for i in range(60):
+            s.checkpoint()
+        assert len(s._undo_stack) <= 50
+
+    def test_is_modified_after_checkpoint(self):
+        s = Session()
+        s.new_project()
+        assert not s.is_modified
+        s.checkpoint()
+        assert s.is_modified
+
+    def test_open_invalid_json_raises(self, tmp_path):
+        path = tmp_path / "bad.openscreen"
+        path.write_text("not json at all")
+        s = Session()
+        with pytest.raises((RuntimeError, ValueError, Exception)):
+            s.open_project(str(path))
+
 
 # ── Project Tests ─────────────────────────────────────────────────────────
 
@@ -155,6 +190,69 @@ class TestProject:
         s.new_project()
         with pytest.raises(ValueError, match="Unknown setting"):
             proj_mod.set_setting(s, "nonexistent_key", 42)
+
+    # ── Extra tests from auto version ──────────────────────────────────
+
+    def test_set_setting_aspectRatio(self):
+        s = Session()
+        s.new_project()
+        proj_mod.set_setting(s, "aspectRatio", "9:16")
+        assert s.editor["aspectRatio"] == "9:16"
+
+    def test_set_setting_invalid_aspectRatio(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises(ValueError):
+            proj_mod.set_setting(s, "aspectRatio", "invalid")
+
+    def test_set_setting_exportQuality(self):
+        s = Session()
+        s.new_project()
+        proj_mod.set_setting(s, "exportQuality", "source")
+        assert s.editor["exportQuality"] == "source"
+
+    def test_set_setting_exportFormat(self):
+        s = Session()
+        s.new_project()
+        proj_mod.set_setting(s, "exportFormat", "gif")
+        assert s.editor["exportFormat"] == "gif"
+
+    def test_set_setting_invalid_exportFormat(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises(ValueError):
+            proj_mod.set_setting(s, "exportFormat", "avi")
+
+    def test_set_setting_padding_valid(self):
+        s = Session()
+        s.new_project()
+        proj_mod.set_setting(s, "padding", 30)
+        assert s.editor["padding"] == 30
+
+    def test_set_setting_padding_too_large(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises(ValueError):
+            proj_mod.set_setting(s, "padding", 101)
+
+    def test_set_setting_calls_checkpoint(self):
+        s = Session()
+        s.new_project()
+        proj_mod.set_setting(s, "padding", 10)
+        assert len(s._undo_stack) >= 1
+
+    def test_crop_region_validation_in_settings(self):
+        s = Session()
+        s.new_project()
+        valid_crop = {"x": 0.1, "y": 0.1, "width": 0.8, "height": 0.8}
+        proj_mod.set_setting(s, "cropRegion", valid_crop)
+        assert s.editor["cropRegion"] == valid_crop
+
+    def test_crop_region_overflow_raises(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises(ValueError):
+            proj_mod.set_setting(s, "cropRegion", {"x": 0.5, "y": 0.0, "width": 0.8, "height": 1.0})
 
 
 # ── Zoom Tests ────────────────────────────────────────────────────────────
@@ -204,7 +302,7 @@ class TestZoom:
     def test_invalid_time_range(self):
         s = Session()
         s.new_project()
-        with pytest.raises(ValueError, match="end_ms must be"):
+        with pytest.raises(ValueError, match="end_ms.*must be"):
             tl_mod.add_zoom_region(s, 5000, 1000)
 
     def test_zoom_undo(self):
@@ -214,6 +312,51 @@ class TestZoom:
         assert len(tl_mod.list_zoom_regions(s)) == 1
         s.undo()
         assert len(tl_mod.list_zoom_regions(s)) == 0
+
+    # ── Extra tests from auto version ──────────────────────────────────
+
+    def test_add_zoom_focus(self):
+        s = Session()
+        s.new_project()
+        region = tl_mod.add_zoom_region(s, 0, 2000, depth=3, focus_x=0.3, focus_y=0.7)
+        assert region["focus"]["cx"] == 0.3
+        assert region["focus"]["cy"] == 0.7
+
+    def test_list_zoom_sorted(self):
+        s = Session()
+        s.new_project()
+        tl_mod.add_zoom_region(s, 5000, 8000, depth=1)
+        tl_mod.add_zoom_region(s, 1000, 3000, depth=2)
+        regions = tl_mod.list_zoom_regions(s)
+        starts = [r["startMs"] for r in regions]
+        assert starts == sorted(starts)
+
+    def test_update_zoom_region(self):
+        s = Session()
+        s.new_project()
+        region = tl_mod.add_zoom_region(s, 1000, 3000, depth=1)
+        updated = tl_mod.update_zoom_region(s, region["id"], depth=4, focus_x=0.8)
+        assert updated["depth"] == 4
+        assert updated["focus"]["cx"] == 0.8
+
+    def test_update_zoom_nonexistent(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises((ValueError, KeyError)):
+            tl_mod.update_zoom_region(s, "fake-id")
+
+    def test_zoom_depth_map_values(self):
+        # ZOOM_DEPTHS maps depth int -> scale factor
+        from cli_anything.openscreen.core.timeline import ZOOM_DEPTHS
+        assert ZOOM_DEPTHS[1] == 1.25
+        assert ZOOM_DEPTHS[6] == 5.0
+
+    def test_add_zoom_calls_checkpoint(self):
+        s = Session()
+        s.new_project()
+        initial = len(s._undo_stack)
+        tl_mod.add_zoom_region(s, 0, 1000, depth=2)
+        assert len(s._undo_stack) > initial
 
 
 # ── Speed Tests ───────────────────────────────────────────────────────────
@@ -239,6 +382,31 @@ class TestSpeed:
         tl_mod.remove_speed_region(s, r["id"])
         assert len(tl_mod.list_speed_regions(s)) == 0
 
+    # ── Extra tests from auto version ──────────────────────────────────
+
+    def test_add_speed_all_valid_values(self):
+        from cli_anything.openscreen.core.timeline import VALID_SPEEDS
+        s = Session()
+        s.new_project()
+        for speed in VALID_SPEEDS:
+            region = tl_mod.add_speed_region(s, 0, 1000, speed=speed)
+            assert region["speed"] == speed
+
+    def test_list_speed_sorted(self):
+        s = Session()
+        s.new_project()
+        tl_mod.add_speed_region(s, 5000, 8000, speed=1.5)
+        tl_mod.add_speed_region(s, 1000, 3000, speed=2.0)
+        regions = tl_mod.list_speed_regions(s)
+        starts = [r["startMs"] for r in regions]
+        assert starts == sorted(starts)
+
+    def test_remove_speed_nonexistent(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises((ValueError, KeyError)):
+            tl_mod.remove_speed_region(s, "nonexistent")
+
 
 # ── Trim Tests ────────────────────────────────────────────────────────────
 
@@ -257,6 +425,29 @@ class TestTrim:
         assert len(tl_mod.list_trim_regions(s)) == 1
         tl_mod.remove_trim_region(s, r["id"])
         assert len(tl_mod.list_trim_regions(s)) == 0
+
+    # ── Extra tests from auto version ──────────────────────────────────
+
+    def test_add_trim_zero_start(self):
+        s = Session()
+        s.new_project()
+        region = tl_mod.add_trim_region(s, 0, 1000)
+        assert region["startMs"] == 0
+
+    def test_list_trim_sorted(self):
+        s = Session()
+        s.new_project()
+        tl_mod.add_trim_region(s, 8000, 10000)
+        tl_mod.add_trim_region(s, 1000, 3000)
+        regions = tl_mod.list_trim_regions(s)
+        starts = [r["startMs"] for r in regions]
+        assert starts == sorted(starts)
+
+    def test_remove_trim_nonexistent(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises((ValueError, KeyError)):
+            tl_mod.remove_trim_region(s, "fake")
 
 
 # ── Crop Tests ────────────────────────────────────────────────────────────
@@ -287,6 +478,39 @@ class TestCrop:
         with pytest.raises(ValueError, match="beyond frame"):
             tl_mod.set_crop(s, 0.5, 0.5, 0.6, 0.6)
 
+    # ── Extra tests from auto version ──────────────────────────────────
+
+    def test_set_crop_overflow_x(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises(ValueError):
+            tl_mod.set_crop(s, 0.5, 0.0, 0.6, 1.0)
+
+    def test_set_crop_overflow_y(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises(ValueError):
+            tl_mod.set_crop(s, 0.0, 0.5, 1.0, 0.6)
+
+    def test_set_crop_negative_raises(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises(ValueError):
+            tl_mod.set_crop(s, -0.1, 0.0, 1.0, 1.0)
+
+    def test_set_crop_calls_checkpoint(self):
+        s = Session()
+        s.new_project()
+        initial = len(s._undo_stack)
+        tl_mod.set_crop(s, 0.0, 0.0, 0.5, 0.5)
+        assert len(s._undo_stack) > initial
+
+    def test_crop_full_frame_valid(self):
+        s = Session()
+        s.new_project()
+        crop = tl_mod.set_crop(s, 0.0, 0.0, 1.0, 1.0)
+        assert crop["x"] == 0.0
+
 
 # ── Annotation Tests ──────────────────────────────────────────────────────
 
@@ -305,6 +529,45 @@ class TestAnnotation:
         assert len(tl_mod.list_annotations(s)) == 1
         tl_mod.remove_annotation(s, a["id"])
         assert len(tl_mod.list_annotations(s)) == 0
+
+    # ── Extra tests from auto version ──────────────────────────────────
+
+    def test_add_annotation_position(self):
+        s = Session()
+        s.new_project()
+        region = tl_mod.add_text_annotation(s, 0, 2000, "Positioned", x=0.25, y=0.75)
+        assert region["position"]["x"] == 0.25
+        assert region["position"]["y"] == 0.75
+
+    def test_list_annotations_sorted(self):
+        s = Session()
+        s.new_project()
+        tl_mod.add_text_annotation(s, 5000, 8000, "Later")
+        tl_mod.add_text_annotation(s, 1000, 3000, "Earlier")
+        regions = tl_mod.list_annotations(s)
+        starts = [r["startMs"] for r in regions]
+        assert starts == sorted(starts)
+
+    def test_update_annotation_text(self):
+        s = Session()
+        s.new_project()
+        region = tl_mod.add_text_annotation(s, 0, 2000, "original")
+        tl_mod.update_annotation(s, region["id"], text_content="updated")
+        regions = tl_mod.list_annotations(s)
+        assert regions[0]["textContent"] == "updated"
+
+    def test_update_annotation_nonexistent(self):
+        s = Session()
+        s.new_project()
+        with pytest.raises((ValueError, KeyError)):
+            tl_mod.update_annotation(s, "fake-id", text_content="x")
+
+    def test_annotation_style_fields(self):
+        s = Session()
+        s.new_project()
+        region = tl_mod.add_text_annotation(s, 0, 1000, "Styled", color="#ff0000", font_size=32)
+        assert region["style"]["color"] == "#ff0000"
+        assert region["style"]["fontSize"] == 32
 
 
 # ── Integration Tests ─────────────────────────────────────────────────────
@@ -355,3 +618,69 @@ class TestIntegration:
         presets = export_mod.list_presets()
         assert len(presets) > 0
         assert any(p["name"] == "mp4_good" for p in presets)
+
+    # ── Extra tests from auto version ──────────────────────────────────
+
+    def test_undo_redo_zoom_workflow(self):
+        s = Session()
+        s.new_project()
+        tl_mod.add_zoom_region(s, 1000, 3000, depth=2)
+        assert len(tl_mod.list_zoom_regions(s)) == 1
+
+        s.undo()
+        assert len(tl_mod.list_zoom_regions(s)) == 0
+
+        s.redo()
+        assert len(tl_mod.list_zoom_regions(s)) == 1
+
+    def test_multiple_undo_levels(self):
+        s = Session()
+        s.new_project()
+        for i in range(5):
+            tl_mod.add_zoom_region(s, i * 1000, (i + 1) * 1000, depth=1)
+
+        assert len(tl_mod.list_zoom_regions(s)) == 5
+        for _ in range(5):
+            s.undo()
+        assert len(tl_mod.list_zoom_regions(s)) == 0
+
+    def test_timeline_boundaries(self):
+        s = Session()
+        s.new_project()
+        tl_mod.add_zoom_region(s, 1000, 3000, depth=1)
+        tl_mod.add_speed_region(s, 2000, 5000, speed=1.5)
+        tl_mod.add_trim_region(s, 4000, 6000)
+
+        boundaries = tl_mod.get_timeline_boundaries(s)
+        assert 0 in boundaries
+        assert 1000 in boundaries
+        assert 2000 in boundaries
+        assert 3000 in boundaries
+        assert 4000 in boundaries
+        assert 5000 in boundaries
+        assert 6000 in boundaries
+
+    def test_active_regions_at(self):
+        s = Session()
+        s.new_project()
+        tl_mod.add_zoom_region(s, 1000, 5000, depth=2)
+        tl_mod.add_speed_region(s, 2000, 4000, speed=1.5)
+        tl_mod.add_trim_region(s, 6000, 8000)
+
+        active = tl_mod.get_active_regions_at(s, 3000)
+        assert len(active["zoom"]) == 1
+        assert len(active["speed"]) == 1
+        assert len(active["trim"]) == 0
+
+        active2 = tl_mod.get_active_regions_at(s, 7000)
+        assert len(active2["trim"]) == 1
+        assert len(active2["zoom"]) == 0
+
+    def test_project_set_triggers_undo(self):
+        s = Session()
+        s.new_project()
+        proj_mod.set_setting(s, "padding", 10)
+        proj_mod.set_setting(s, "padding", 30)
+        assert s.editor["padding"] == 30
+        s.undo()
+        assert s.editor["padding"] == 10
