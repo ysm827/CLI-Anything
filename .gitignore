@@ -149,6 +149,8 @@
 /cloudcompare/.*
 /openscreen/*
 /openscreen/.*
+/cloudanalyzer/*
+/cloudanalyzer/.*
 /wiremock/*
 /wiremock/.*
 /exa/*
@@ -187,6 +189,8 @@
 !/renderdoc/agent-harness/
 !/cloudcompare/agent-harness/
 !/openscreen/agent-harness/
+!/cloudanalyzer/
+!/cloudanalyzer/agent-harness/
 !/wiremock/
 !/wiremock/agent-harness/
 !/exa/agent-harness/
