@@ -740,8 +740,10 @@
       .nav-link { padding: 0.4rem 0.4rem; font-size: 0.75rem; }
     }
   </style>
-  <!-- Umami Analytics — replace data-website-id with your actual ID -->
+  <!-- Umami Analytics — hkuds.github.io -->
   <script defer src="https://cloud.umami.is/script.js" data-website-id="07082d05-efd3-4f85-a7a1-b426b0e8bfaa"></script>
+  <!-- Umami Analytics — clianything.cc -->
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="a076c661-bed1-405c-a522-813794e688b4"></script>
 </head>
 <body>
   <!-- noscript pixel: catches non-JS visitors (AI crawlers) -->
@@ -1114,36 +1116,46 @@
         document.addEventListener(evt, onHumanInteraction, { once: false, passive: true });
       });
 
-      // ── Fetch all-time stats from Umami Cloud API ──
+      // ── Fetch all-time stats from Umami Cloud API (both sites) ──
       const UMAMI_API = 'https://api.umami.is/v1';
       const UMAMI_KEY = 'api_idAebMhzn6z0hsUQT7BSxRuCK2GUZvRY';
-      const WEBSITE_ID = '07082d05-efd3-4f85-a7a1-b426b0e8bfaa';
+      const WEBSITE_IDS = [
+        '07082d05-efd3-4f85-a7a1-b426b0e8bfaa', // hkuds.github.io
+        'a076c661-bed1-405c-a522-813794e688b4',  // clianything.cc
+      ];
       const headers = { 'Accept': 'application/json', 'x-umami-api-key': UMAMI_KEY };
 
       async function loadVisitorStats() {
         try {
           const now = Date.now();
-          // All-time: startAt=0
-          const [statsResp, eventsResp] = await Promise.all([
-            fetch(`${UMAMI_API}/websites/${WEBSITE_ID}/stats?startAt=0&endAt=${now}`, { headers }),
-            fetch(`${UMAMI_API}/websites/${WEBSITE_ID}/events/series?startAt=0&endAt=${now}&unit=year&timezone=UTC`, { headers })
+          let totalVisits = 0, humanCount = 0;
+
+          // Fetch stats and events from both sites in parallel
+          const fetches = WEBSITE_IDS.flatMap(id => [
+            fetch(`${UMAMI_API}/websites/${id}/stats?startAt=0&endAt=${now}`, { headers }),
+            fetch(`${UMAMI_API}/websites/${id}/events/series?startAt=0&endAt=${now}&unit=year&timezone=UTC`, { headers })
           ]);
+          const [statsResp1, eventsResp1, statsResp2, eventsResp2] = await Promise.all(fetches);
 
-          if (statsResp.ok) {
-            const stats = await statsResp.json();
-            document.getElementById('stat-total').textContent = (stats.visits ?? 0).toLocaleString();
+          for (const resp of [statsResp1, statsResp2]) {
+            if (resp.ok) {
+              const stats = await resp.json();
+              totalVisits += stats.visits ?? 0;
+            }
           }
 
-          if (eventsResp.ok) {
-            const events = await eventsResp.json();
-            let humanCount = 0, agentCount = 0;
-            events.forEach(e => {
-              if (e.x === 'visit-human') humanCount += e.y || 0;
-              if (e.x === 'visit-agent') agentCount += e.y || 0;
-            });
-            document.getElementById('stat-human').textContent = humanCount.toLocaleString();
-            document.getElementById('stat-agent').textContent = agentCount.toLocaleString();
+          for (const resp of [eventsResp1, eventsResp2]) {
+            if (resp.ok) {
+              const events = await resp.json();
+              events.forEach(e => {
+                if (e.x === 'visit-human') humanCount += e.y || 0;
+              });
+            }
           }
+
+          document.getElementById('stat-total').textContent = totalVisits.toLocaleString();
+          document.getElementById('stat-human').textContent = humanCount.toLocaleString();
+          document.getElementById('stat-agent').textContent = Math.max(0, totalVisits - humanCount).toLocaleString();
         } catch (_) {
           // Stats not available — leave dashes
         }
