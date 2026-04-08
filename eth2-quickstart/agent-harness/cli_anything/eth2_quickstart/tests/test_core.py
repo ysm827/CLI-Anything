@@ -142,6 +142,23 @@ class TestCLI:
         assert payload["requested"]["execution_client"] == "geth"
         assert payload["requested"]["consensus_client"] == "lighthouse"
 
+    def test_install_clients_rejects_unknown_execution_client(self, runner: CliRunner, repo_root: Path):
+        result = runner.invoke(
+            cli,
+            [
+                "--repo-root",
+                str(repo_root),
+                "install-clients",
+                "--execution-client",
+                "bad-client",
+                "--consensus-client",
+                "lighthouse",
+                "--confirm",
+            ],
+        )
+        assert result.exit_code == 2
+        assert "Invalid value for '--execution-client'" in result.output
+
     @patch("cli_anything.eth2_quickstart.eth2_quickstart_cli.Eth2QuickStartBackend")
     def test_setup_node_auto_with_network_only_uses_ensure(self, backend_cls, runner: CliRunner, repo_root: Path):
         backend = backend_cls.return_value
@@ -251,6 +268,22 @@ class TestCLI:
         payload = json.loads(result.output)
         assert payload["plan"]["consensus_client"] == "prysm"
         assert payload["plan"]["config_updates"]["GRAFITTI"] == "test"
+
+    def test_configure_validator_rejects_unknown_consensus_client(
+        self, runner: CliRunner, repo_root: Path
+    ):
+        result = runner.invoke(
+            cli,
+            [
+                "--repo-root",
+                str(repo_root),
+                "configure-validator",
+                "--consensus-client",
+                "bad-client",
+            ],
+        )
+        assert result.exit_code == 2
+        assert "Invalid value for '--consensus-client'" in result.output
 
     @patch("cli_anything.eth2_quickstart.eth2_quickstart_cli.Eth2QuickStartBackend")
     def test_status_json(self, backend_cls, runner: CliRunner, repo_root: Path):

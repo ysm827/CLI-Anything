@@ -9,6 +9,12 @@ import sys
 import click
 
 from cli_anything.eth2_quickstart import __version__
+from cli_anything.eth2_quickstart.core.commands import (
+    VALID_CONSENSUS_CLIENTS,
+    VALID_EXECUTION_CLIENTS,
+    VALID_MEV_OPTIONS,
+    VALID_NETWORKS,
+)
 from cli_anything.eth2_quickstart.core.install import install_clients, setup_node
 from cli_anything.eth2_quickstart.core.rpc import start_rpc
 from cli_anything.eth2_quickstart.core.status import health_check, status
@@ -16,6 +22,10 @@ from cli_anything.eth2_quickstart.core.validator import configure_validator
 from cli_anything.eth2_quickstart.utils.eth2qs_backend import Eth2QuickStartBackend
 
 CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
+NETWORK_CHOICES = click.Choice(sorted(VALID_NETWORKS))
+EXECUTION_CLIENT_CHOICES = click.Choice(sorted(VALID_EXECUTION_CLIENTS))
+CONSENSUS_CLIENT_CHOICES = click.Choice(sorted(VALID_CONSENSUS_CLIENTS))
+MEV_CHOICES = click.Choice(sorted(VALID_MEV_OPTIONS))
 
 
 def emit(data, as_json: bool) -> None:
@@ -138,10 +148,10 @@ def repl(ctx: click.Context):
 
 @cli.command("setup-node")
 @click.option("--phase", type=click.Choice(["auto", "phase1", "phase2"]), default="auto")
-@click.option("--network", type=click.Choice(["mainnet", "holesky"]), default=None)
-@click.option("--execution-client", type=str, default=None)
-@click.option("--consensus-client", type=str, default=None)
-@click.option("--mev", type=click.Choice(["mev-boost", "commit-boost", "none"]), default=None)
+@click.option("--network", type=NETWORK_CHOICES, default=None)
+@click.option("--execution-client", type=EXECUTION_CLIENT_CHOICES, default=None)
+@click.option("--consensus-client", type=CONSENSUS_CLIENT_CHOICES, default=None)
+@click.option("--mev", type=MEV_CHOICES, default=None)
 @click.option("--ethgas", is_flag=True, default=False)
 @click.option("--skip-deps", is_flag=True, default=False)
 @click.option("--confirm", is_flag=True, default=False, help="Confirm mutating operations")
@@ -174,10 +184,10 @@ def setup_node_cmd(
 
 
 @cli.command("install-clients")
-@click.option("--network", type=click.Choice(["mainnet", "holesky"]), default=None)
-@click.option("--execution-client", required=True, type=str)
-@click.option("--consensus-client", required=True, type=str)
-@click.option("--mev", type=click.Choice(["mev-boost", "commit-boost", "none"]), default="mev-boost")
+@click.option("--network", type=NETWORK_CHOICES, default=None)
+@click.option("--execution-client", required=True, type=EXECUTION_CLIENT_CHOICES)
+@click.option("--consensus-client", required=True, type=CONSENSUS_CLIENT_CHOICES)
+@click.option("--mev", type=MEV_CHOICES, default="mev-boost")
 @click.option("--ethgas", is_flag=True, default=False)
 @click.option("--skip-deps", is_flag=True, default=False)
 @click.option("--confirm", is_flag=True, default=False, help="Confirm mutating operations")
@@ -227,7 +237,7 @@ def start_rpc_cmd(ctx, web_stack, server_name, ssl, confirm):
 
 
 @cli.command("configure-validator")
-@click.option("--consensus-client", required=True, type=str)
+@click.option("--consensus-client", required=True, type=CONSENSUS_CLIENT_CHOICES)
 @click.option("--fee-recipient", default=None)
 @click.option("--graffiti", default=None)
 @click.option("--keys-dir", default=None)
