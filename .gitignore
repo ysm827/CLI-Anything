@@ -206,6 +206,8 @@
 !/wiremock/
 !/wiremock/agent-harness/
 !/exa/agent-harness/
+!/safari/
+!/safari/agent-harness/
 
 # Step 7: Ignore build artifacts within allowed dirs
 **/__pycache__/
