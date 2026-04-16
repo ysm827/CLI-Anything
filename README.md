@@ -930,6 +930,13 @@ Each application received complete, production-ready CLI interfaces — not demo
 <td align="center">✅ 98</td>
 </tr>
 <tr>
+<td align="center"><strong>🧬 <a href="unimol_tools/agent-harness/">Uni-Mol Tools</a></strong></td>
+<td>Molecular Property Prediction (AI4S)</td>
+<td><code>cli-anything-unimol-tools</code></td>
+<td>Uni-Mol molecular ML backend</td>
+<td align="center">✅ 67</td>
+</tr>
+<tr>
 <td align="center"><strong>🎬 <a href="videocaptioner/agent-harness/">VideoCaptioner</a></strong></td>
 <td>AI Video Captioning</td>
 <td><code>cli-anything-videocaptioner</code></td>

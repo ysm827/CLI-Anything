@@ -846,6 +846,25 @@
       ]
     },
     {
+      "name": "unimol_tools",
+      "display_name": "Uni-Mol Tools",
+      "version": "1.0.0",
+      "description": "Molecular property prediction — train and predict with 5 task types (classification, regression, multiclass, multilabel) for drug discovery",
+      "requires": "PyTorch 1.12+, Uni-Mol Tools backend",
+      "homepage": "https://github.com/dptech-corp/Uni-Mol/tree/main/unimol_tools",
+      "source_url": null,
+      "install_cmd": "pip install git+https://github.com/HKUDS/CLI-Anything.git#subdirectory=unimol_tools/agent-harness",
+      "entry_point": "cli-anything-unimol-tools",
+      "skill_md": "unimol_tools/agent-harness/cli_anything/unimol_tools/SKILL.md",
+      "category": "science",
+      "contributors": [
+        {
+          "name": "545487677",
+          "url": "https://github.com/545487677"
+        }
+      ]
+    },
+    {
       "name": "safari",
       "display_name": "Safari",
       "version": "1.0.0",
