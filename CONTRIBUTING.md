@@ -15,7 +15,7 @@ Adding a new CLI harness is the most impactful contribution. You can either add 
 Place your code under `<software>/agent-harness/` and ensure the following:
 
 1. **`<SOFTWARE>.md`** — the SOP document exists at `<software>/agent-harness/<SOFTWARE>.md` describing the harness architecture.
-2. **`SKILL.md`** — the AI-discoverable skill definition exists inside the Python package at `cli_anything/<software>/SKILL.md`.
+2. **`SKILL.md`** — the AI-discoverable skill definition exists inside the Python package at `cli_anything/<software>/skills/SKILL.md`.
 3. **Tests** — unit tests (`test_core.py`, passable without backend) and E2E tests (`test_full_e2e.py`) are present and passing.
 4. **`README.md`** — the project README includes the new software with a link to its harness directory.
 5. **`registry.json`** — add an entry for the new software (see [Registry fields](#registry-fields) below).
@@ -30,7 +30,7 @@ Requirements for standalone CLIs:
 1. **Published package** — your CLI must be installable via `pip install <package-name>` (PyPI) or a `pip install git+https://...` URL.
 2. **`SKILL.md`** — an AI-discoverable skill definition exists somewhere in your repo.
 3. **Tests** — your repo should have its own test suite.
-4. **`registry.json`** — add an entry with `source_url` pointing to your repo and `skill_md` pointing to the raw URL of your SKILL.md (see [Registry fields](#registry-fields) below).
+4. **`registry.json`** — add an entry with `source_url` pointing to your repo and `skill_md` pointing to the full URL of your SKILL.md (see [Registry fields](#registry-fields) below).
 
 ### B) New Features
 
